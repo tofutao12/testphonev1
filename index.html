@@ -428,6 +428,7 @@
                             <div class="flex justify-between"><span>รหัส: ${s.id}</span></div>
                             <p class="text-[#059669]">💰 <b>ยอดโอน:</b> ${s.amount} ฿</p>
                             <div class="flex gap-2">
+                                <button onclick="openSlipModal('${s.imageUrl}')" class="bg-blue-400 text-white px-3 py-2 rounded-xl w-full">ดูสลิป</button>
                                 <button onclick="approveSlipWithFee('${key}', '${s.id}', ${s.amount})" class="bg-emerald-500 text-white px-3 py-2 rounded-xl w-full">✅ อนุมัติ</button>
                                 <button onclick="rejectSlip('${key}')" class="bg-rose-400 text-white px-3 py-2 rounded-xl w-full">❌ ลบ</button>
                             </div>
@@ -436,17 +437,19 @@
             });
         }
 
+        // 🟢 แก้ไขฟังก์ชันอนุมัติ ให้จำลองการทำงานโดยไม่ต้องพึ่ง Google Sheet ที่ Error อยู่
         async function approveSlipWithFee(dbKey, custId, baseAmount) {
             if(!confirm(`ยืนยันการอนุมัติยอดจำลอง ${baseAmount} บาท ให้รหัส ${custId}?`)) return;
-            const response = await fetch(scriptUrl, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'approveSlip', id: custId, amount: baseAmount, adminId: "TEST_ADMIN" })
-            });
-            const res = await response.json();
-            if(res && res.success) {
-                alert('✅ อนุมัติสำเร็จ! วันตัดยอดใหม่ขยับให้เรียบร้อยแล้วใน Sheet ทดสอบ');
-                db.ref('pendingSlipsTest/' + dbKey).remove(); 
-            } else { alert('เกิดข้อผิดพลาด: ' + res.error); }
+            
+            try {
+                // สำหรับโหมด TEST: ให้ลบออกจากคิว Firebase ได้ทันที โดยไม่ต้องยิง API ไปที่ Google Sheet
+                // ทำให้ UI ทำงานได้อย่างราบรื่น 
+                await db.ref('pendingSlipsTest/' + dbKey).remove();
+                alert('✅ อนุมัติสำเร็จ! (จำลองการอนุมัติในโหมด TEST เรียบร้อย)');
+                
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message);
+            }
         }
 
         async function rejectSlip(dbKey) {
