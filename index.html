@@ -131,7 +131,6 @@
             </div>
             <div id="installment-error" class="hidden-page text-center text-[13px] text-[#ff5277] font-bold mt-2 bg-[#fff0f3] p-3 rounded-xl border border-[#ffffff]">ไม่พบข้อมูลค่ะ</div>
             
-            <!-- ตรงนี้คือกล่องแสดงผลหลอดต่างๆ -->
             <div id="installment-result" class="hidden-page flex flex-col gap-3"></div>
             
             <button onclick="goBackFromPage3()" class="btn-back"><i class="fa-solid fa-arrow-left"></i> กลับหน้าแรก</button>
@@ -169,7 +168,7 @@
         // 🔴 ลิงก์ API ตัวจำลอง (Google Sheet TEST)
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbwVYJH4EFimkCGDGU-_sZyg2dc6VxBTmCpoqbywMUO_PftEU-j3GQgOvhKGmDkWCaeZ/exec';
         
-        // 🚨 ฐานข้อมูล Firebase ตัวจริง (แต่โค้ดด้านล่างเราเปลี่ยนไปใช้โฟลเดอร์ Test แล้ว)
+        // 🚨 ฐานข้อมูล Firebase ตัวจริง (ห้องจำลอง)
         const firebaseConfig = {
             apiKey: "AIzaSyC2SoaNI5hCs6RCczGQv8b7-ofIQHmzX0c",
             authDomain: "sunstory4-e842b.firebaseapp.com",
@@ -184,7 +183,6 @@
 
         let currentCustomerId = ''; 
 
-        // 🌟 ฟังก์ชันดึงฉายาลูกค้า
         function getCustomerBadge(percent) {
             if (percent <= 30) return "🐣 เบบี๋เพิ่งเริ่ม";
             if (percent <= 70) return "🌸 วัยรุ่นนักสู้";
@@ -192,18 +190,14 @@
             return "👑 VIP รับเครื่อง!";
         }
 
-        window.onload = function() {
-            listenToPendingSlips();
-        };
+        window.onload = function() { listenToPendingSlips(); };
 
         function openContactModal() { document.getElementById('contact-modal').classList.remove('hidden-page'); }
         function closeContactModal() { document.getElementById('contact-modal').classList.add('hidden-page'); }
 
         function switchAdminTab(tabIndex) {
-            const btn1 = document.getElementById('tab-btn-1');
-            const btn2 = document.getElementById('tab-btn-2');
-            const content1 = document.getElementById('admin-tab-content-1');
-            const content2 = document.getElementById('admin-tab-content-2');
+            const btn1 = document.getElementById('tab-btn-1'); const btn2 = document.getElementById('tab-btn-2');
+            const content1 = document.getElementById('admin-tab-content-1'); const content2 = document.getElementById('admin-tab-content-2');
             if (tabIndex === 1) {
                 btn1.classList.add('active'); btn2.classList.remove('active');
                 content1.classList.remove('hidden-page'); content2.classList.add('hidden-page');
@@ -252,13 +246,11 @@
                     const installmentAmt = parseFloat(String(data.installmentAmt).replace(/,/g, '')) || 0;
                     const balanceNum = parseFloat(String(data.balance).replace(/,/g, '')) || 0;
                     const totalNum = parseFloat(String(data.total).replace(/,/g, '')) || 0;
-                    
                     const customerType = data.type ? data.type.trim() : "";
                     
                     let badgePercent = 0;
                     let progressHtml = '';
 
-                    // 📊 1. สร้างหลอด Progress Bar (สถานะการผ่อน)
                     if (customerType.includes("ผ่อนไปใช้ไป")) {
                         let percent = creditTargetNum > 0 ? (paidNum / creditTargetNum) * 100 : 0;
                         if (percent > 100) percent = 100;
@@ -294,7 +286,6 @@
                             </div>`;
                     }
 
-                    // 📆 2. สร้างหลอด Cooldown Bar (วันตัดยอด)
                     let cooldownHtml = '';
                     if (data.dueDate && String(data.dueDate).trim() !== "" && data.dueDate !== "-") {
                         let cleanDateStr = String(data.dueDate).split('T')[0]; 
@@ -310,7 +301,6 @@
                             const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
                             let barColor = "from-[#4ade80] to-[#22c55e]";
-                            let statusText = `เหลือเวลาอีก ${diffDays} วัน`;
                             let widthPct = "100%";
                             let timeRemainText = diffDays > 0 ? `(อีก ${diffDays} วัน)` : diffDays === 0 ? `(วันนี้!)` : `(เลยกำหนด ${Math.abs(diffDays)} วัน)`;
                             let warningHtml = '';
@@ -347,8 +337,6 @@
                                     <span class="text-[12px] font-semibold">ยอดคงเหลือสุทธิ</span><br>
                                     <span class="text-lg font-bold text-[#ff5277]">${balanceNum.toLocaleString()} ฿</span>
                                 </div>
-
-                                <!-- แสดงหลอดสถานะผ่อน และ หลอดวันตัดยอด -->
                                 ${progressHtml}
                                 ${cooldownHtml}
                             </div>
@@ -389,13 +377,11 @@
                     ctx.drawImage(img, 0, 0, width, height);
                     const base64Image = canvas.toDataURL('image/jpeg', 0.6);
                     
-                    // 🔴 บันทึกลง Firebase ห้องทดสอบ
                     await db.ref('pendingSlipsTest').push({
                         id: currentCustomerId, amount: amount, imageUrl: base64Image,
                         time: new Date().toLocaleTimeString('th-TH')
                     });
 
-                    // 🌟 แอนิเมชันแสตมป์
                     const uploadZone = document.getElementById('upload-zone');
                     const stamp = document.createElement('i');
                     stamp.className = 'fa-solid fa-stamp stamp-effect stamp-animate';
@@ -413,7 +399,6 @@
         }
 
         function listenToPendingSlips() {
-            // 🔴 ดึงจาก Firebase ห้องทดสอบ
             db.ref('pendingSlipsTest').on('value', (snapshot) => {
                 const container = document.getElementById('admin-slips-container');
                 if(!container) return;
@@ -429,7 +414,7 @@
                             <p class="text-[#059669]">💰 <b>ยอดโอน:</b> ${s.amount} ฿</p>
                             <div class="flex gap-2">
                                 <button onclick="openSlipModal('${s.imageUrl}')" class="bg-blue-400 text-white px-3 py-2 rounded-xl w-full">ดูสลิป</button>
-                                <button onclick="approveSlipWithFee('${key}', '${s.id}', ${s.amount})" class="bg-emerald-500 text-white px-3 py-2 rounded-xl w-full">✅ อนุมัติ</button>
+                                <button onclick="approveSlipWithFee('${key}', '${s.id}', ${s.amount})" class="bg-emerald-500 text-white px-3 py-2 rounded-xl w-full" id="btn-approve-${key}">✅ อนุมัติ</button>
                                 <button onclick="rejectSlip('${key}')" class="bg-rose-400 text-white px-3 py-2 rounded-xl w-full">❌ ลบ</button>
                             </div>
                         </div>`;
@@ -437,18 +422,33 @@
             });
         }
 
-        // 🟢 แก้ไขฟังก์ชันอนุมัติ ให้จำลองการทำงานโดยไม่ต้องพึ่ง Google Sheet ที่ Error อยู่
+        // 🟢 ฟังก์ชันนี้ถูกแก้ไขเรื่อง CORS (Content-Type: text/plain)
         async function approveSlipWithFee(dbKey, custId, baseAmount) {
             if(!confirm(`ยืนยันการอนุมัติยอดจำลอง ${baseAmount} บาท ให้รหัส ${custId}?`)) return;
             
+            const btn = document.getElementById(`btn-approve-${dbKey}`);
+            if(btn) { btn.disabled = true; btn.innerHTML = "กำลังโหลด..."; }
+
             try {
-                // สำหรับโหมด TEST: ให้ลบออกจากคิว Firebase ได้ทันที โดยไม่ต้องยิง API ไปที่ Google Sheet
-                // ทำให้ UI ทำงานได้อย่างราบรื่น 
-                await db.ref('pendingSlipsTest/' + dbKey).remove();
-                alert('✅ อนุมัติสำเร็จ! (จำลองการอนุมัติในโหมด TEST เรียบร้อย)');
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    // ⚠️ ใส่ headers ตรงนี้เพื่อแก้ปัญหา CORS Error เวลาติดต่อ Apps Script ⚠️
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'approveSlip', id: custId, amount: baseAmount, adminId: "TEST_ADMIN" })
+                });
                 
+                const res = await response.json();
+                if(res && res.success) {
+                    alert('✅ อนุมัติสำเร็จ! ยอดและวันตัดยอดอัปเดตลง Sheet ทดสอบแล้ว');
+                    await db.ref('pendingSlipsTest/' + dbKey).remove(); // ลบสลิปออก
+                } else { 
+                    alert('พบปัญหาจากระบบชีต: ' + (res.error || 'ไม่ทราบสาเหตุ')); 
+                    if(btn) { btn.disabled = false; btn.innerHTML = "✅ อนุมัติ"; }
+                }
             } catch (err) {
-                alert('เกิดข้อผิดพลาดในการลบข้อมูล: ' + err.message);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ (อาจเกิดจาก CORS หรือฝั่งชีต): ' + err.message);
+                if(btn) { btn.disabled = false; btn.innerHTML = "✅ อนุมัติ"; }
             }
         }
 
